@@ -1,0 +1,29 @@
+os: linux
+services:
+  - docker
+
+language: generic
+
+script:
+  - docker pull mochiya98/ubuntu-cpp-build
+  - docker run -v $PWD:/tmp/build -w=/tmp/build mochiya98/ubuntu-cpp-build /bin/sh -c "make -j4;chmod -R 777 release;"
+
+before_deploy:
+  - mkdir dist
+  - cp ./{LICENSE,README.md} ./release
+  - PKG_NAME=cpp_git-set-file-times_$TRAVIS_TAG
+  - mv release $PKG_NAME
+  - zip -r ./dist/$PKG_NAME.zip $PKG_NAME
+  - tar -zcvf ./dist/$PKG_NAME.tar.gz $PKG_NAME
+
+deploy:
+  provider: releases
+  skip_cleanup: true
+  api_key:
+    secure: "J8NYg3Ajw8wOVNAHgAy40lfVFH48OzIIQGJaL59v4rZULQZOYDt9y8hihQ/jbcum/bTU0RyTYtoRp43P3Hg5T7H2f/5qzDkd4QyF1kp2o1nYxDBS4hmRoxos8AQ8Isk3wJDXY/R+hhQEFFtYxmuMx0EuDG0jjMFzpvSofQRSxspiPHua4H+A70m5GPDh8sGJr7Btd0lC0ImGMWXedszP2+jYis/iih3wLFAzw9XvFHQz90YcSDDOnN4fInUMgUZ0LL1fGINW0uaeEaJTJKqFl96zG3TCygxenF67lfv2180BcP8l/7eGGGvhCPDlWWHtKbc05K6FFo/uWhSJzBAwRaW0uxkRHuhRN0y558W3dGVqsTHOxsWbYf0zTp//pCFEFrCK2RlRSqRHTla2jdjr+E1/9uUotEzVq/3CMGk6xsRKGJro9nEvpU4/mIW9tZUf7e2R7+1WfaAi/QaJKp9YVHdvLtP0DuN9LrCHH6YjKhVHwvAfFOLz6s97HdE6Ek2J8x3oFzk31WzcydSzpzUPj+SD3aQNJf0LJjCRQ8Ovzkf2gBQNzADwW9wb4hZo7AmRh8hsFTHRViJXBiEndPokK4DvIq2pN0a60doajY/rQBHK/1jtNW3ZmJ/rMoczsMBAy4HDbqoVEvbEtMBBmCrYmDVMSR7DSQfKlQ6nBqW/wx4="
+  file_glob: true
+  file: "$TRAVIS_BUILD_DIR/dist/**/*.{tar.gz,zip}"
+  on:
+    tags: true
+    all_branches: true
+    condition: "$TRAVIS_TAG =~ ^v[0-9].*$"
